@@ -42,7 +42,7 @@ def loadJson(filename):
 
 
 def collectInfo(mode = "Player"):
-    """整理选手或英雄信息"""
+    """整理选手或英雄数据保存至csv"""
     data = []
     for file in os.listdir(JSON_DIR):
         if file.endswith(f"{mode}_Info.json"):
@@ -55,30 +55,6 @@ def collectInfo(mode = "Player"):
                     del temp["position_id"]
                 data.append(temp)
     pd.DataFrame(data).drop_duplicates().to_csv(os.path.join(DATA_DIR,f"{mode}_Info.csv"), index=False)
-
-
-def getIDs(mode="Player"):
-    """整理选手、英雄与对应的ID"""
-    filename = os.path.join(JSON_DIR, f"{mode}_Ids.json")
-    if os.path.isfile(filename):
-        return loadJson(filename)
-    else:
-        data = {}
-        for file in [os.path.join(JSON_DIR, f) for f in os.listdir(JSON_DIR) if f.endswith(f"{mode}_Info.json")]:
-            for item in loadJson(file):
-                name = item[f"{mode.lower()}_name"]
-                id = item[f"{mode.lower()}_id"]
-                if "tournament_id" in item:
-                    id += item["tournament_id"]
-                if "position_id" in item and mode == "Hero":
-                    id += item["position_id"]
-                if not (record := data.get(name, [])) or id not in set(record):
-                    record.append(id)
-                    data[name] = record
-
-        with open(filename, "w") as f:
-            json.dump(data, f)
-        return data
 
 
 def resultToCSV(filename):
@@ -105,13 +81,11 @@ def resultToCSV(filename):
     for i in df.columns:
         if "hero" in i:
             columns.append(i)
-            
+
     df.to_csv(filename, index=None, columns=columns)
 
 
 if __name__ == '__main__':
-    #resultToCSV(os.path.join(DATA_DIR, "data.csv"))
-    #collectInfo("Player")
-    #collectInfo("Hero")
-    getIDs("Player")
-    getIDs("Hero")
+    resultToCSV(os.path.join(DATA_DIR, "data.csv"))
+    collectInfo("Player")
+    collectInfo("Hero")
