@@ -1,11 +1,11 @@
-import threading
-from config import *
-from urllib import request, parse
-from queue import Queue
-from threading import Thread
-
 import json
 import os
+
+from .config import *
+from urllib import request, parse
+from queue import Queue
+from threading import Thread, Lock
+
 
 
 def multiThread(target, num_thread, **kwargs):
@@ -19,16 +19,16 @@ def multiThread(target, num_thread, **kwargs):
 
 
 class Spider:
-    url: str = None
-    post_data: str = None
-    data:dict = None
+    url: str
+    post_data: str
+    data:dict
 
     @property
     def _post_data(self):
         if self.post_data:
             return parse.urlencode(self.post_data).encode()
 
-    def fetchJson(self, url, method, temp_name, save_temp=True):
+    def fetchJson(self, url, method, temp_name):
         temp_filename = os.path.join(TEMP_DIR, "_".join([self.__class__.__name__, temp_name]))
         if not os.path.isfile(temp_filename):
             print(f"Fetching {temp_filename}")
@@ -43,7 +43,7 @@ class Spider:
                 print("Error url:", url)
                 return
 
-            if save_temp:
+            if SAVE_TEMP:
                 with open(temp_filename, "wb") as f:
                     f.write(response)
             return json.loads(response) if response else None
@@ -102,7 +102,7 @@ class PlayerSpider(Spider):
         self.exlude_item = ("country_id","country_image","player_image","team_image","update_time", "f_score")
         self.filename = "{}_" + filename
         self.num_thread = num_thread
-        self.lock = threading.Lock()
+        self.lock = Lock()
         self.run()
 
     def processData(self, data):
@@ -213,7 +213,7 @@ class MatchSpider(Spider):
 
     def fetchData(self):
         url = self.url_list[0].format(tour_Id = self.tour_id)
-        rounds = self.fetchJson(url, "get", f"{self.tour_id}_Round_list.json", save_temp=True)
+        rounds = self.fetchJson(url, "get", f"{self.tour_id}_Round_list.json")
         if not rounds:
             return
         # 获取所有比赛轮次

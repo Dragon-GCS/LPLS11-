@@ -1,7 +1,8 @@
 import json
 import os
 import pandas as pd
-from Spiders import JSON_DIR, DATA_DIR
+
+from .config import JSON_DIR, DATA_DIR
 
 INCLUDE = {
     "Player": (
@@ -82,10 +83,55 @@ def resultToCSV(filename):
         if "hero" in i:
             columns.append(i)
 
-    df.to_csv(filename, index=None, columns=columns)
+    df.to_csv(os.path.join(DATA_DIR, filename), index=None, columns=columns)
+
+def getTeamMember():
+    if os.path.isfile(filename:=os.path.join(DATA_DIR, f"Teams_member.json")):
+        return loadJson(filename)
+    data = {}
+    for file in [os.path.join(JSON_DIR, f) for f in os.listdir(JSON_DIR) if f.endswith(f"Player_Info.json")]:
+        for item in loadJson(file):
+            # 记录队伍名
+            team_name = item["team_name"]
+            content = data.get(team_name, {})
+            # 记录队伍id
+            content["team_id"] = item.get("team_id")
+            tour_id = item.get("tournament_id")
+            # 记录队员信息
+            content[tour_id] = content.get(tour_id, {})
+            player_name = item.get("player_name")
+            player_id = item.get("player_id")
+            play_times = item.get("PLAYS_TIMES")
+            content[tour_id][player_id] = (player_name, play_times)
+
+            data[team_name] = content
+    with open(filename, "w") as f:
+        json.dump(data, f)
+    return data
+
+def nameToID(mode="Player"):
+    if os.path.isfile(filename:=os.path.join(DATA_DIR, f"{mode}NameToIDs.json")):
+        return loadJson(filename)
+    else:
+        data = {}
+        for file in [os.path.join(JSON_DIR, f) for f in os.listdir(JSON_DIR) if f.endswith(f"{mode}_Info.json")]:
+            for item in loadJson(file):
+                name = item[f"{mode.lower()}_name"]
+                ids = data.get(name, [])
+                item_id = "_".join((item[f"{mode.lower()}_id"], item["tournament_id"]))
+
+                if item_id not in ids:
+                    ids.append(item_id)
+                data[name] = ids
+        with open(filename, "w") as f:
+            json.dump(data, f)
+        return data
 
 
 if __name__ == '__main__':
-    resultToCSV(os.path.join(DATA_DIR, "data.csv"))
+    resultToCSV("data.csv")
     collectInfo("Player")
     collectInfo("Hero")
+    getTeamMember()
+    nameToID("Player")
+    nameToID("Hero")

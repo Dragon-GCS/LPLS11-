@@ -1,20 +1,23 @@
+############################### Spider Config ###############################
 import os
+ROOT = os.path.dirname(os.path.dirname(__file__))
 
-TEMP_DIR = "./data/temp"
-if not os.path.isdir(TEMP_DIR):
-    os.makedirs(TEMP_DIR)
-
-JSON_DIR = "./data/json/"
-if not os.path.isdir(JSON_DIR):
-    os.makedirs(JSON_DIR)
-
-DATA_DIR = "./data"
+DATA_DIR = os.path.join(ROOT, "data")
 if not os.path.isdir(DATA_DIR):
     os.makedirs(DATA_DIR)
 
+TEMP_DIR = os.path.join(DATA_DIR, "temp")
+if not os.path.isdir(TEMP_DIR):
+    os.makedirs(TEMP_DIR)
+
+JSON_DIR = os.path.join(DATA_DIR, "json")
+if not os.path.isdir(JSON_DIR):
+    os.makedirs(JSON_DIR)
+
+
 HEADER = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36",
-    "cookie": "cookie: Hm_lvt_7d06c05f2674b5f5fffa6500f4e9da89=1631376039; tgw_l7_route=44a8ecb0130e9cd4b0b2316b71c7a866; PHPSESSID=5ebelmq7p4mbtm9pn71bsvl6j6; Hm_lpvt_7d06c05f2674b5f5fffa6500f4e9da89=1631376664",
+    "cookie": "",
 }
 
 SAVE_TEMP = True

@@ -1,8 +1,10 @@
 **/temp/
 **/json/
-/.vscode/
 **/__pycache__/
+/.vscode/
+/.venv/
 /.ipynb_checkpoints/
 
 test*
 *.ipynb
+*.h5
