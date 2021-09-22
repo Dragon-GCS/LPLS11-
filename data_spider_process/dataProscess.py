@@ -2,7 +2,7 @@ import json
 import os
 import pandas as pd
 
-from .config import JSON_DIR, DATA_DIR
+from config import JSON_DIR, DATA_DIR
 
 INCLUDE = {
     "Player": (
@@ -55,7 +55,14 @@ def collectInfo(mode = "Player"):
                     temp[f"{mode.lower()}_id"] = temp[f"{mode.lower()}_id"] + temp["position_id"]
                     del temp["position_id"]
                 data.append(temp)
-    pd.DataFrame(data).drop_duplicates().to_csv(os.path.join(DATA_DIR,f"{mode}_Info.csv"), index=False)
+    df = pd.DataFrame(data).drop_duplicates()
+    
+    with open(file := os.path.join(DATA_DIR, f"{mode}_Encoder.json"), "w") as f:
+        print(f"{mode}_Encoder saved to {file}")
+        encoder = {value: i for i, value in enumerate(df[f"{mode.lower()}_id"])}
+        json.dump(encoder, f)
+
+    df.to_csv(os.path.join(DATA_DIR,f"{mode}_Info.csv"), index=False)
 
 
 def resultToCSV(filename):
@@ -65,12 +72,11 @@ def resultToCSV(filename):
         for item in (content := loadJson(file)):
             for key,value in item.items():
                 if 'heroID' in key:
-                    pfix = file.split("/")[-1].split("_")[0] + HERO_POS[key.split("_")[2]]  # 赛区ID + 位置ID    
-                    item[key] = value + pfix
+                    # 英雄ID + 赛区ID + 位置ID
+                    item[key] += os.path.basename(file).split("_")[0] + HERO_POS[key.split("_")[2]]
                 if 'playerID' in key:
-                    pfix = file.split("/")[-1].split("_")[0]
-                    #item[key] = playerID[value + pfix] + pfix
-                    item[key] += file.split("/")[-1].split("_")[0]
+                    # 选手ID + 赛区ID
+                    item[key] += os.path.basename(file).split("_")[0]
 
         data += content
     columns=["result_id","red_result"]
@@ -86,8 +92,7 @@ def resultToCSV(filename):
     df.to_csv(os.path.join(DATA_DIR, filename), index=None, columns=columns)
 
 def getTeamMember():
-    if os.path.isfile(filename:=os.path.join(DATA_DIR, f"Teams_member.json")):
-        return loadJson(filename)
+    filename = os.path.join(DATA_DIR, f"Teams_member.json")
     data = {}
     for file in [os.path.join(JSON_DIR, f) for f in os.listdir(JSON_DIR) if f.endswith(f"Player_Info.json")]:
         for item in loadJson(file):
@@ -107,7 +112,6 @@ def getTeamMember():
             data[team_name] = content
     with open(filename, "w") as f:
         json.dump(data, f)
-    return data
 
 def nameToID(mode="Player"):
     if os.path.isfile(filename:=os.path.join(DATA_DIR, f"{mode}NameToIDs.json")):
@@ -133,5 +137,5 @@ if __name__ == '__main__':
     collectInfo("Player")
     collectInfo("Hero")
     getTeamMember()
-    nameToID("Player")
-    nameToID("Hero")
+    #nameToID("Player")
+    #nameToID("Hero")

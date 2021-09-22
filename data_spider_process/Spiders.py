@@ -1,7 +1,7 @@
 import json
 import os
 
-from .config import *
+from config import *
 from urllib import request, parse
 from queue import Queue
 from threading import Thread, Lock

@@ -4,7 +4,6 @@ import numpy as np
 import tensorflow as tf
 
 from matplotlib import pyplot as plt
-from tensorflow import keras
 from model import *
 
 AUTO = tf.data.experimental.AUTOTUNE
@@ -12,13 +11,12 @@ BATCH = 64
 VAL_SPLIT = 0.05
 EPOCH = 200
 
-optimizer = "adam"
-loss = "binary_crossentropy"
+optimizer = keras.optimizers.Adam()
+loss = keras.losses.SparseCategoricalCrossentropy()
 metric = "accuracy"
 
 np.random.seed(1001)
 tf.random.set_seed(1001)
-
 
 
 def getEDcoder(data):
@@ -69,12 +67,12 @@ def generateTrainData(matchfile, player_file, hero_file = None):
         elif 'player' in col:
             data[col] = data[col].map(lambda x: player_encoder.get(x, None))
 
-    data = data.dropna().astype("int")
+    data = data.dropna().astype("int32")
     data2 = data[columns]
     data2.columns = data.columns
     data2["red_result"] = 1 - data["red_result"]
     data = pd.concat([data,data2])
-
+    
     train_data, val_data = train_val_spilt(data)
     val_data = processData(val_data.values, hero_file)
     train_data = processData(train_data.values, hero_file)
@@ -94,21 +92,23 @@ def plot_history(history):
     plt.plot(history.history['val_' + metric][2:])
     plt.legend(['train', 'val']) 
 
-def train(model, plot=True, save_name="", **train_kwargs):
+def train(model, train_data, val_data, epoch, plot=True, save_name="",):
     model.compile(optimizer = optimizer,
                   loss = loss,
                   metrics = metric)
-    history = model.fit(train_kwargs)
+    history = model.fit(train_data, validation_data=val_data,epochs=epoch)
     
     if plot:
         plot_history(history)
+        plt.show()
 
-    filename = os.path.join(MODEL_DIR, save_name) + \
-            f"loss-{history.history['loss'][-1]:.4f}_" \
-            f"{metric}-{history.history[f'{metric}'][-1]:.4f}_"\
-            f"valLoss-{history.history['val_loss'][-1]:.4f}_"\
-            f"val{metric}-{history.history[f'val_{metric}'][-1]:.4f}.h5"
-    model.save(filename)
+    if save_name:
+        filename = os.path.join(MODEL_DIR, save_name) + \
+                f"loss-{history.history['loss'][-1]:.4f}_" \
+                f"{metric}-{history.history[f'{metric}'][-1]:.4f}_"\
+                f"valLoss-{history.history['val_loss'][-1]:.4f}_"\
+                f"val{metric}-{history.history[f'val_{metric}'][-1]:.4f}.h5"
+        model.save_weights(filename)
     
 if __name__ == '__main__':
     from data_spider_process.config import ROOT
@@ -119,13 +119,8 @@ if __name__ == '__main__':
     match_file = "./data/data.csv"
     playerInfo_file = "./data/Player_Info.csv"
     heroInfo_file = "" #"./data/Hero_Info.csv"
-    
-    train_data, val_data = generateTrainData(match_file,
-                                             playerInfo_file,
-                                             heroInfo_file)
+
+    train_data, val_data = generateTrainData(match_file,playerInfo_file, hero_file=None)
+
     model = PlayerOnlyModel()
-    train(model,
-          save_name="PlayerModel",
-          train_data=train_data, 
-          validation_data=val_data,
-          epochs=EPOCH)
+    train(model, train_data, val_data, 80, save_name="playeronly_")
