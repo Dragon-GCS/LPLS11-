@@ -8,3 +8,5 @@
 test*
 *.ipynb
 *.h5
+
+!*playeronly*

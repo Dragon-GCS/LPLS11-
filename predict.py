@@ -69,6 +69,7 @@ if __name__ == '__main__':
     B = ["EDG", "100", "T1"]
     C = ["FNC", "RNG"]
     D = ["MAD", "GEN", "TL"]
+    
     match = {"A组":A, "B组":B, "C组":C, "D组":D}
     for group in match:
         print(group)
@@ -82,3 +83,16 @@ if __name__ == '__main__':
                     print(f"0:1\t胜率：{result[0]:.2%}")
                 else:
                     print(f"1:0\t胜率：{result[1]:.2%}")
+    LPL = ["EDG", "FPX", "RNG", "LNG"]
+    LCK = ["DK", "GEN", "T1","HLE"]
+    LCS = ["MAD", "FNC", "RGE"]
+    LEC = ["100", "TL", "C9"]
+    for team in LPL:
+        print(team)
+        for other in LCK + LCS + LEC:
+            _, _, result = predict(team, other)
+            print(f"{other}", end="")
+            if result[0] > result[1]:
+                print(f"胜\t概率：{result[0]:.2%}")
+            else:
+                print(f"负\t概率：{result[1]:.2%}")
