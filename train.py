@@ -1,4 +1,5 @@
 import os
+import argparse
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -9,7 +10,7 @@ from model import *
 AUTO = tf.data.experimental.AUTOTUNE
 BATCH = 64
 VAL_SPLIT = 0.05
-EPOCH = 200
+EPOCH = 80
 
 optimizer = keras.optimizers.Adam()
 loss = keras.losses.SparseCategoricalCrossentropy()
@@ -35,10 +36,10 @@ def train_val_spilt(df):
     return train_data, val_data
 
 def processData(data, include_hero = False):
-    if not include_hero:
-        data = tf.data.Dataset.from_tensor_slices(((data[:,1:11]),data[:,0]))
+    if include_hero:
+        data = tf.data.Dataset.from_tensor_slices(((data[:,1:]),data[:,0]))
     else:
-        data = tf.data.Dataset.from_tensor_slices(((data[:,1:11],data[:,11:]),data[:,0]))
+        data = tf.data.Dataset.from_tensor_slices(((data[:,1:11]),data[:,0]))
     data = data.shuffle(2000).batch(BATCH).prefetch(AUTO)
     return data
 
@@ -97,10 +98,6 @@ def train(model, train_data, val_data, epoch, plot=True, save_name="",):
                   loss = loss,
                   metrics = metric)
     history = model.fit(train_data, validation_data=val_data,epochs=epoch)
-    
-    if plot:
-        plot_history(history)
-        plt.show()
 
     if save_name:
         filename = os.path.join(MODEL_DIR, save_name) + \
@@ -109,18 +106,31 @@ def train(model, train_data, val_data, epoch, plot=True, save_name="",):
                 f"valLoss-{history.history['val_loss'][-1]:.4f}_"\
                 f"val{metric}-{history.history[f'val_{metric}'][-1]:.4f}.h5"
         model.save_weights(filename)
+
+    if plot:
+        plot_history(history)
+        plt.show()
+
     
 if __name__ == '__main__':
     from data_spider_process.config import ROOT
     MODEL_DIR = os.path.join(ROOT, "model")
     if not os.path.isdir(MODEL_DIR):
         os.makedirs(MODEL_DIR)
-
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-hero",  action="store_true", help="use hero info")
+    parser.add_argument("-save",  default=None, help="save the model")
+    parser.add_argument("-epoch",  default=EPOCH, help="epochs to train", type=int)
+    args = parser.parse_args()
+    
     match_file = "./data/data.csv"
     playerInfo_file = "./data/Player_Info.csv"
-    heroInfo_file = "" #"./data/Hero_Info.csv"
-
-    train_data, val_data = generateTrainData(match_file,playerInfo_file, hero_file=None)
-
+    heroInfo_file = ""
     model = PlayerOnlyModel()
-    train(model, train_data, val_data, 80, save_name="playeronly_")
+    if args.hero:
+        heroInfo_file = "./data/Hero_Info.csv"
+        model = PlayerHeroModel()
+
+    train_data, val_data = generateTrainData(match_file,playerInfo_file, hero_file=heroInfo_file)
+
+    train(model, train_data, val_data, args.epoch, save_name=args.save)

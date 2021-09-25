@@ -10,7 +10,7 @@ import tensorflow as tf
 TOUR = ('200', '201', '202', '203')
 PLAYER_ENCODER = os.path.join(DATA_DIR, "Player_Encoder.json")
 HERO_ENCODER = os.path.join(DATA_DIR, "Hero_Encoder.json")
-PRETRAINED_MODEL = "./model/playeronly_loss-0.5549_accuracy-0.7112_valLoss-0.5618_valaccuracy-0.7126.h5"
+PRETRAINED_MODEL = "./model/playerOnlySelfAtten_loss-0.5440_accuracy-0.7169_valLoss-0.5447_valaccuracy-0.7345.h5"
 
 
 def getTeamMember(team_name):
@@ -87,12 +87,13 @@ if __name__ == '__main__':
     LCK = ["DK", "GEN", "T1","HLE"]
     LCS = ["MAD", "FNC", "RGE"]
     LEC = ["100", "TL", "C9"]
+    print("    \t", end="")
+    for other in LCK + LCS + LEC:
+        print(f"{other:^6s}", end="\t")
+    print()
     for team in LPL:
-        print(team)
+        print(team, end="\t")
         for other in LCK + LCS + LEC:
             _, _, result = predict(team, other)
-            print(f"{other}", end="")
-            if result[0] > result[1]:
-                print(f"胜\t概率：{result[0]:.2%}")
-            else:
-                print(f"负\t概率：{result[1]:.2%}")
+            print(f"{result[1]:.2%}", end="\t")
+        print()
