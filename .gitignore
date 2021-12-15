@@ -1,9 +1,10 @@
 **/temp/
 **/json/
 **/__pycache__/
-/.vscode/
-/.venv/
-/.ipynb_checkpoints/
+.vscode/
+.venv/
+.idea/
+.ipynb_checkpoints/
 
 test*
 *.ipynb
